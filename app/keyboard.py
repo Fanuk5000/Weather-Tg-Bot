@@ -5,15 +5,12 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.database.requests import get_categories, get_category_item
 
-main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Catalog")],
-                                     [KeyboardButton(text="Trashcan")],
-                                     [KeyboardButton(text="Abous us"), KeyboardButton(text="Contats")]],
+main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Todas",),],
+                                     [KeyboardButton(text="Yesterday")],
+                                     [KeyboardButton(text="Tommorow")],
+                                     [KeyboardButton(text="Previous 7 days"), KeyboardButton(text="Next 7 days")]],
                            resize_keyboard=True,
-                           input_field_placeholder="Choose a menu item")
-
-catalog = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Weather", callback_data="weather")],
-    [InlineKeyboardButton(text="AI", callback_data="ai")]])
+                           input_field_placeholder="For when a weather")
 
 get_city = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Send city",
                                                          request_location=True)]],

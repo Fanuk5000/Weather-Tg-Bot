@@ -15,7 +15,6 @@ router = Router()
 class Register(StatesGroup):
     name = State()
     city = State()
-    cords = State()
 
 @router.message(CommandStart())
 async def cmd_start(message:Message):
@@ -28,10 +27,6 @@ async def cmd_start(message:Message):
 async def cmd_help(message: Message):
     await message.answer("You pressed help")
     
-@router.message(F.text == "Catalog")
-async def catalog(message: Message):
-    await message.answer("Choose category", reply_markup=await kb.categories())
-    
 @router.callback_query(F.data.startswith('category_'))
 async def category(callback: CallbackQuery):
     await callback.answer('You`ve choosen category')
@@ -43,40 +38,35 @@ async def weather(callback: CallbackQuery):
     await callback.answer("Weather")#show_alert
     await callback.message.answer("You`ve choosen weather")
 
-   
-
-
 
 @router.message(Command("weather"))
 async def register(message: Message):
     await message.answer("Weather")
 
-#state
+#register state
 @router.message(Command("register"))
 async def register(message: Message, state: FSMContext):
-    await state.set_state(Register.name)
-    await message.answer("Write your name")
+    if await rq.check_user(message.from_user.id):
+        await message.answer("You are alredy registered")
+    else:
+        await state.set_state(Register.name)
+        await message.answer("Write your name")
    
-#state
+#register state
 @router.message(Register.name)
 async def register_name(message: Message, state: FSMContext):
     await state.update_data(name = message.text)
     await state.set_state(Register.city)
     await message.answer("Write your city")
 
-#state
+#register state
 @router.message(Register.city)
 async def register_city(message: Message, state: FSMContext):
     await state.update_data(city = message.text)
-    await state.set_state(Register.cords)
-    await message.answer("Enter your location", reply_markup=kb.get_city)
-
-@router.message(Register.cords, F.location)
-async def register_cords(message: Message, state: FSMContext):
-    await state.update_data(cords = message.location)
     data = await state.get_data()
     
-    await rq.set_user(message.from_user.id, data["name"], data["city"], str(data["cords"]))
     
-    await message.answer(f'Your name: {data["name"]}\nYour age: {data["city"]}\nCity: {data["cords"]}')
+    await rq.set_user(message.from_user.id, data["name"], data["city"])
+
+    await message.answer(f'Your name: {data["name"]}\nYour city: {data["city"]}')
     await state.clear()
