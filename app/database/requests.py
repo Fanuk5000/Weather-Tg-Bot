@@ -12,7 +12,14 @@ async def set_user(tg_id:int, name:str, city:str) -> None:
 async def check_user(tg_id:int) -> bool:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
-        return user
+        return bool(user)
+
+async def change_city(tg_id:int, new_city:str) -> bool:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        
+        user.city = new_city
+        await session.commit()
 
 async def get_categories():
     async with async_session() as session:

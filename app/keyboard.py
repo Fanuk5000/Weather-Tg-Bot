@@ -5,7 +5,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.database.requests import get_categories, get_category_item
 
-main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Todas",),],
+main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Today`s",),],
                                      [KeyboardButton(text="Yesterday")],
                                      [KeyboardButton(text="Tommorow")],
                                      [KeyboardButton(text="Previous 7 days"), KeyboardButton(text="Next 7 days")]],
