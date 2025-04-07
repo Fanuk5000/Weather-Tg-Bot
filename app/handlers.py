@@ -1,5 +1,3 @@
-import requests
-
 from aiogram import F, Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart, Command
@@ -10,6 +8,8 @@ from aiogram.fsm.context import FSMContext
 
 import app.keyboard as kb
 import app.database.requests as rq
+
+from app.weather import get_weather
 
 router = Router()
 
@@ -93,7 +93,13 @@ async def register_city(message: Message, state: FSMContext):
 
 @router.message(F.text == "Today`s")
 async def register(message: Message):
-    await message.answer("Today")
+    if await rq.check_user(message.from_user.id):
+        city = await rq.get_user_city(message.from_user.id)
+        temperature = await get_weather("Kyiv")
+        
+        await message.answer(f"temperature in {city} is {temperature}°C")
+    else:
+        await message.answer("You`ve not registered yet, to do it /register")
 
 # @router.callback_query(F.data.startswith('category_'))
 # async def category(callback: CallbackQuery):

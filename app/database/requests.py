@@ -24,6 +24,17 @@ async def change_city(tg_id:int, new_city:str) -> bool:
 async def get_categories():
     async with async_session() as session:
         return await session.scalars(select(Category))
+    
+async def get_user_city(tg_id:int):
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        
+        
+        if user:
+            return user.city
+        else:
+            return None
+
 
 async def get_category_item(category_id):
     async with async_session() as session:
