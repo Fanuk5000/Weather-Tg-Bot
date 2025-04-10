@@ -21,6 +21,13 @@ class Register(StatesGroup):
 class Changecity(StatesGroup):
     new_city = State()
 
+class Askweather(StatesGroup):
+    city = State() 
+
+@router.message(F.text == "_Never_09090")
+async def alt_answer(message:Message):
+    await message.answer("You`ve not registered yet, to do it /register or use /weather")
+
 '''Commands'''
 
 @router.message(CommandStart())
@@ -31,7 +38,8 @@ async def cmd_start(message:Message):
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
-    await message.answer("You pressed help")
+    await alt_answer(message)
+    # await message.answer("You pressed help")
 
 
 
@@ -46,8 +54,9 @@ async def change_city(message: Message, state: FSMContext):
 
 
 @router.message(Command("weather"))
-async def register(message: Message):
-    await message.answer("Weather")
+async def register(message: Message, state: FSMContext):
+    await state.set_state(Askweather.city)
+    await message.answer("Write where you see wanna the weather")
 
 
 @router.message(Command("register"))
@@ -58,7 +67,21 @@ async def register(message: Message, state: FSMContext):
         await state.set_state(Register.name)
         await message.answer("Write your name")
 
-'''Commands'''
+
+'''States'''
+
+#Ask_weather state
+@router.message(Askweather.city)
+async def register(message: Message, state: FSMContext):
+    await state.update_data(city = message.text)
+    
+    data = await state.get_data()
+    temperature = await get_weather(data["city"])
+    
+    await message.answer(f"temperature in {data["city"]} is {temperature}°C")
+
+
+
 
 #change_city state
 @router.message(Changecity.new_city)
@@ -91,15 +114,17 @@ async def register_city(message: Message, state: FSMContext):
     await message.answer(f'Your name: {data["name"]}\nYour city: {data["city"]}')
     await state.clear()
 
+
+'''Buttons'''
 @router.message(F.text == "Today`s")
 async def register(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
-        temperature = await get_weather("Kyiv")
+        temperature = await get_weather(city)
         
         await message.answer(f"temperature in {city} is {temperature}°C")
     else:
-        await message.answer("You`ve not registered yet, to do it /register")
+        await alt_answer(message)
 
 # @router.callback_query(F.data.startswith('category_'))
 # async def category(callback: CallbackQuery):

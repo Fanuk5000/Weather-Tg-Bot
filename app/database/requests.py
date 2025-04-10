@@ -1,5 +1,5 @@
 from app.database.models import async_session
-from app.database.models import User, Category, Item
+from app.database.models import User
 from sqlalchemy import select
 
 async def set_user(tg_id:int, name:str, city:str) -> None: 
@@ -21,9 +21,6 @@ async def change_city(tg_id:int, new_city:str) -> bool:
         user.city = new_city
         await session.commit()
 
-async def get_categories():
-    async with async_session() as session:
-        return await session.scalars(select(Category))
     
 async def get_user_city(tg_id:int):
     async with async_session() as session:
@@ -36,6 +33,10 @@ async def get_user_city(tg_id:int):
             return None
 
 
-async def get_category_item(category_id):
-    async with async_session() as session:
-        return await session.scalars(select(Item).where(Item.category == category_id))
+# async def get_categories():
+#     async with async_session() as session:
+#         return await session.scalars(select(Category))
+
+# async def get_category_item(category_id):
+#     async with async_session() as session:
+#         return await session.scalars(select(Item).where(Item.category == category_id))
