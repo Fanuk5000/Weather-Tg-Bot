@@ -8,15 +8,15 @@ async def get_weather(city: str):
                 f"https://api.openweathermap.org/data/2.5/weather",
                 params={"q": city, "appid": open_weather_token, "units": "metric"}
             ) as response:
-                if response.status == 200:
+                if response.status == 200: #success
                     data = await response.json()
                     if "main" in data and "temp" in data["main"]:
                         return str(data["main"]["temp"])
                     else:
                         return f"Unexpected response structure: {data}"
-                elif response.status == 404:
+                elif response.status == 404: #no such page
                     return "City not found"
-                elif response.status == 429:
+                elif response.status == 429: #too much requests
                     return "Rate limit exceeded. Please try again later."
                 else:
                     return f"Error: {response.status} - {await response.text()}"
