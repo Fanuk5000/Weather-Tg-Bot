@@ -1,12 +1,40 @@
 import aiohttp
 
-async def get_weather(city: str):
-    open_weather_token = "68cfa9ce6e82a3380e78a50301f5c637"
+_open_weather_token = "68cfa9ce6e82a3380e78a50301f5c637"
+
+async def get_city_coordinates(city: str):
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"https://api.openweathermap.org/geo/1.0/direct",
+                params={"q": city, "limit": 1, "appid": _open_weather_token}
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data:
+                        lat = data[0]['lat']
+                        lon = data[0]['lon']
+                        print(f"Coordinates for {city}:")
+                        print(f"Latitude: {lat}")
+                        print(f"Longitude: {lon}")
+                        return lat, lon
+                    else:
+                        print(f"No location found for city: {city}")
+                        return None, None
+                else:
+                    print(f"Error fetching coordinates: HTTP {response.status}")
+                    return None, None
+    except Exception as e:
+        print("Error fetching coordinates:", e)
+        return None, None
+
+
+async def get_current_weather(city: str):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://api.openweathermap.org/data/2.5/weather",
-                params={"q": city, "appid": open_weather_token, "units": "metric"}
+                params={"q": city, "appid": _open_weather_token, "units": "metric"}
             ) as response:
                 if response.status == 200: #success
                     data = await response.json()
