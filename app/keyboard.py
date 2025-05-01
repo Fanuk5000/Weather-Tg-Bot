@@ -4,8 +4,8 @@ from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Today`s",),],
-                                     [KeyboardButton(text="Yesterday")],
+main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Поточна",),],
+                                     [KeyboardButton(text="Завтрашня")],
                                      [KeyboardButton(text="Tommorow")],
                                      [KeyboardButton(text="Previous 7 days"), KeyboardButton(text="Next 7 days")]],
                            resize_keyboard=True,

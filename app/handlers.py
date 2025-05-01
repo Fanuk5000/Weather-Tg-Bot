@@ -9,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 import app.keyboard as kb
 import app.database.requests as rq
 
-from app.weather import get_weather
+from app.weather import get_current_weather, get_city_coordinates, get_tomorrow_weather
 
 router = Router()
 
@@ -32,9 +32,12 @@ async def alt_answer(message:Message):
 
 @router.message(CommandStart())
 async def cmd_start(message:Message):
-    await message.answer("You are welcome to illya`s bot!\nRegister to get weather(/register)", reply_markup=kb.main)
+    await message.answer("You are welcome to FaneraWeather bot!\nRegister to get weather(/register)", reply_markup=kb.main)
     
-    # await message.reply("How are you?")
+@router.message(Command("test"))
+async def cmd_start(message:Message):
+    # await message.answer(str(await get_city_coordinates("Kyiv")))
+    await get_city_coordinates("Kyiv")
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
@@ -76,7 +79,7 @@ async def register(message: Message, state: FSMContext):
     await state.update_data(city = message.text)
     
     data = await state.get_data()
-    temperature = await get_weather(data["city"])
+    temperature = await get_current_weather(data["city"])
     
     await message.answer(f"temperature in {data["city"]} is {temperature}°C")
 
@@ -116,13 +119,29 @@ async def register_city(message: Message, state: FSMContext):
 
 
 '''Buttons'''
-@router.message(F.text == "Today`s")
+@router.message(F.text == "Поточна")
 async def register(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
-        temperature = await get_weather(city)
+        temperature = await get_current_weather(city)
         
-        await message.answer(f"temperature in {city} is {temperature}°C")
+        await message.answer(f"Зараз температура {temperature} у {city} °C")
+    else:
+        await alt_answer(message)
+    
+@router.message(F.text == "Завтрашня")
+async def register(message: Message):
+    if await rq.check_user(message.from_user.id):
+        city = await rq.get_user_city(message.from_user.id)
+        temperature = await get_tomorrow_weather(city)
+        
+        
+        await message.answer(f"Завтрашня температура у {city}:")
+        if isinstance(temperature, list):
+            concatenated = "\n".join(temperature)
+            await message.answer(concatenated)
+
+        
     else:
         await alt_answer(message)
 
