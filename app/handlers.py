@@ -9,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 import app.keyboard as kb
 import app.database.requests as rq
 
-from app.weather import get_current_weather, get_city_coordinates, get_tomorrow_weather
+from app.weather import get_current_weather, get_city_coordinates, get_tomorrow_weather, get_weather_for_3_days
 
 router = Router()
 
@@ -24,16 +24,16 @@ class Changecity(StatesGroup):
 class Askweather(StatesGroup):
     city = State() 
 
-@router.message(F.text == "_Never_09090")
-async def alt_answer(message:Message):
-    await message.answer("You`ve not registered yet, to do it /register or use /weather")
+@router.message(lambda message: message.from_user.id == 1094008377 and message.text == "admin")
+async def answer_not_registered(message:Message):
+    await message.answer("Ви ще не зареєстровані\nЩоб це зробити напишіть /register", reply_markup=kb.main)
 
 '''Commands'''
 
 @router.message(CommandStart())
 async def cmd_start(message:Message):
-    await message.answer("You are welcome to FaneraWeather bot!\nRegister to get weather(/register)", reply_markup=kb.main)
-    
+    await message.answer("Ласкаво просимо до погодного боту \"FaneraWeather\"!\nВи можете зареєструватись через(/register) ", reply_markup=kb.main)
+
 @router.message(Command("test"))
 async def cmd_start(message:Message):
     # await message.answer(str(await get_city_coordinates("Kyiv")))
@@ -41,7 +41,7 @@ async def cmd_start(message:Message):
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
-    await alt_answer(message)
+    await answer_not_registered(message)
     # await message.answer("You pressed help")
 
 
@@ -50,25 +50,25 @@ async def cmd_help(message: Message):
 async def change_city(message: Message, state: FSMContext):
     if await rq.check_user(message.from_user.id):
         await state.set_state(Changecity.new_city)
-        await message.answer("Write your new city")
+        await message.answer("Напишіть нове місто")
     else:
-        await message.answer('You`ve not registered yet\nTo do it write "/register"')
-        
+        await answer_not_registered(message)
+
 
 
 @router.message(Command("weather"))
 async def register(message: Message, state: FSMContext):
     await state.set_state(Askweather.city)
-    await message.answer("Write where you see wanna the weather")
+    await message.answer("Напишіть місто, в якому хочете дізнатись погоду")
 
 
 @router.message(Command("register"))
 async def register(message: Message, state: FSMContext):
     if await rq.check_user(message.from_user.id):
-        await message.answer("You are alredy registered")
+        await message.answer("Ви вже зареєстровані\nЯкщо хочете змінити місто \"/change_city\"")
     else:
         await state.set_state(Register.name)
-        await message.answer("Write your name")
+        await message.answer("Напишіть своє ім'я чи нікнейм")
 
 
 '''States'''
@@ -81,7 +81,8 @@ async def register(message: Message, state: FSMContext):
     data = await state.get_data()
     temperature = await get_current_weather(data["city"])
     
-    await message.answer(f"temperature in {data["city"]} is {temperature}°C")
+    await message.answer(f"Зараз температура {temperature} у {data["city"]} °C")
+    await state.clear()
 
 
 
@@ -94,7 +95,7 @@ async def changing(message: Message, state: FSMContext):
     await rq.change_city(message.from_user.id ,data["new_city"])
     
     await state.clear()
-    await message.answer("Your city has been successfully changed")
+    await message.answer("Місто було успішно змінено")
 
 
 
@@ -103,7 +104,7 @@ async def changing(message: Message, state: FSMContext):
 async def register_name(message: Message, state: FSMContext):
     await state.update_data(name = message.text)
     await state.set_state(Register.city)
-    await message.answer("Write your city")
+    await message.answer("Напишіть місто, де хочете бачити погоду")
 
 #register state
 @router.message(Register.city)
@@ -114,7 +115,7 @@ async def register_city(message: Message, state: FSMContext):
     
     await rq.set_user(message.from_user.id, data["name"], data["city"])
 
-    await message.answer(f'Your name: {data["name"]}\nYour city: {data["city"]}')
+    await message.answer(f'Твоє ім\'я: {data["name"]}\n: {data["city"]}')
     await state.clear()
 
 
@@ -127,7 +128,7 @@ async def register(message: Message):
         
         await message.answer(f"Зараз температура {temperature} у {city} °C")
     else:
-        await alt_answer(message)
+        await answer_not_registered(message)
     
 @router.message(F.text == "Завтрашня")
 async def register(message: Message):
@@ -138,12 +139,24 @@ async def register(message: Message):
         
         await message.answer(f"Завтрашня температура у {city}:")
         if isinstance(temperature, list):
-            concatenated = "\n".join(temperature)
+            concatenated = "\n".join(temperature[::3])
             await message.answer(concatenated)
-
+    else:
+        await answer_not_registered(message)
+        
+@router.message(F.text == "3 дні")
+async def register(message: Message):
+    if await rq.check_user(message.from_user.id):
+        city = await rq.get_user_city(message.from_user.id)
+        temperature = await get_weather_for_3_days(city)
+        
+        if isinstance(temperature, dict):
+            for date, weather in temperature.items():
+                await message.answer(f"{date}:\n {weather}")
+        
         
     else:
-        await alt_answer(message)
+        await answer_not_registered(message)
 
 # @router.callback_query(F.data.startswith('category_'))
 # async def category(callback: CallbackQuery):
