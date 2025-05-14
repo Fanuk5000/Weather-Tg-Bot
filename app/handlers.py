@@ -46,7 +46,7 @@ async def cmd_help(message: Message):
 
 
 
-@router.message(Command("change_city"))
+@router.message(Command("changecity"))
 async def change_city(message: Message, state: FSMContext):
     if await rq.check_user(message.from_user.id):
         await state.set_state(Changecity.new_city)
@@ -68,7 +68,7 @@ async def register(message: Message, state: FSMContext):
         await message.answer("Ви вже зареєстровані\nЯкщо хочете змінити місто \"/change_city\"")
     else:
         await state.set_state(Register.name)
-        await message.answer("Напишіть своє ім'я чи нікнейм")
+        await message.answer("Напишіть нікнейм")
 
 
 '''States'''
@@ -115,7 +115,7 @@ async def register_city(message: Message, state: FSMContext):
     
     await rq.set_user(message.from_user.id, data["name"], data["city"])
 
-    await message.answer(f'Твоє ім\'я: {data["name"]}\n: {data["city"]}')
+    await message.answer(f'Ваш нікнейм: {data["name"]}\nВи обрали город: {data["city"]}')
     await state.clear()
 
 

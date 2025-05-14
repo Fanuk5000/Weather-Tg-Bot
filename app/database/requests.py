@@ -26,9 +26,8 @@ async def get_user_city(tg_id:int):
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         
-        
         if user:
             return user.city
         else:
             return None
-
+    
