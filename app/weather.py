@@ -1,14 +1,18 @@
 import aiohttp
 from datetime import datetime, timedelta
 
-_open_weather_token = "68cfa9ce6e82a3380e78a50301f5c637"
+from os import getenv
+from dotenv import load_dotenv
 
-async def get_city_coordinates(city: str):
+load_dotenv("config.env")
+OPEN_WEATHER_TOKEN = getenv("OPEN_WEATHER_TOKEN")
+
+async def get_city_coordinates(city: str) -> tuple:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://api.openweathermap.org/geo/1.0/direct",
-                params={"q": city, "limit": 1, "appid": _open_weather_token}
+                params={"q": city, "limit": 1, "appid": OPEN_WEATHER_TOKEN}
             ) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -17,41 +21,46 @@ async def get_city_coordinates(city: str):
                         lon = data[0]['lon']
                         return str(lat), str(lon)
                     else:
-                        print(f"No location found for city: {city}")
+                        print(f"get_city_coordinates: No location found for city: {city}")
                         return None, None
                 else:
-                    print(f"Error fetching coordinates: HTTP {response.status}")
+                    print(f"get_city_coordinates: Error fetching coordinates: HTTP {response.status}")
                     return None, None
     except Exception as e:
-        print("Error fetching coordinates:", e)
+        print("get_city_coordinates: Error fetching coordinates:", e)
         return None, None
 
 
-async def get_current_weather(city: str) -> str:
+async def get_current_weather(city: str) -> dict:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://api.openweathermap.org/data/2.5/weather",
-                params={"q": city, "appid": _open_weather_token, "units": "metric"}
+                params={"q": city, "appid": OPEN_WEATHER_TOKEN, "units": "metric", "lang": "ua"}
             ) as response:
+                dict_info = {}
+                
                 if response.status == 200: #success
                     data = await response.json()
                     if "main" in data and "temp" in data["main"]:
-                        return str(round(data["main"]["temp"]))
+                        
+                        dict_info = {"temp": round(data["main"]["temp"]), "description": data["weather"][0]["description"]}
+                        
+                        return dict_info
                     else:
-                        return f"Unexpected response structure: {data}"
+                        return f"get_current_weather: Unexpected response structure: {data}"
                 elif response.status == 404: #no such page
-                    return "City not found"
+                    return "get_current_weather: City not found"
                 elif response.status == 429: #too much requests
-                    return "Rate limit exceeded. Please try again later."
+                    return "get_current_weather: Rate limit exceeded. Please try again later."
                 else:
                     return f"Error: {response.status} - {await response.text()}"
     except aiohttp.ClientError as ex:
-        return f"Network error: {ex}"
+        return f"get_current_weather: Network error: {ex}"
     except Exception as ex:
-        return f"An unexpected error occurred: {ex}"
+        return f"get_current_weather: An unexpected error occurred: {ex}"
 
-async def get_tomorrow_weather(city) -> list:
+async def get_tomorrow_weather(city) -> dict:
     lat, lon = await get_city_coordinates(city)
     if lat is None or lon is None:
         return 
@@ -60,7 +69,7 @@ async def get_tomorrow_weather(city) -> list:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://api.openweathermap.org/data/3.0/onecall",
-                params={"lat": lat, "lon": lon, "appid": _open_weather_token, "exclude": "minutely,daily,current,alerts", "units": "metric", "lang": "ua" }
+                params={"lat": lat, "lon": lon, "appid": OPEN_WEATHER_TOKEN, "exclude": "minutely,daily,current,alerts", "units": "metric", "lang": "ua" }
             ) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -103,7 +112,7 @@ async def get_tomorrow_weather(city) -> list:
     except Exception as ex:
         return f"An unexpected error occurred: {ex}"
     
-async def get_weather_for_3_days(city: str) -> str:
+async def get_weather_for_3_days(city: str) -> dict:
     lat, lon = await get_city_coordinates(city)
     if lat is None or lon is None:
         return 
@@ -112,7 +121,7 @@ async def get_weather_for_3_days(city: str) -> str:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://api.openweathermap.org/data/3.0/onecall",
-                params={"lat": lat, "lon": lon, "appid": _open_weather_token, "exclude": "minutely,hourly,current,alerts", "units": "metric", "lang": "ua"}
+                params={"lat": lat, "lon": lon, "appid": OPEN_WEATHER_TOKEN, "exclude": "minutely,hourly,current,alerts", "units": "metric", "lang": "ua"}
             ) as response:
                 if response.status == 200: #success
                     days_dict = {}
@@ -154,7 +163,7 @@ async def get_weather_for_3_days(city: str) -> str:
 
 
 # def get_tomorrow_weather(lat, lon):
-#     url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=minutely,daily,current,alerts&appid={open_weather_token}&units=metric"
+#     url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=minutely,daily,current,alerts&appid={OPEN_WEATHER_TOKEN}&units=metric"
     
 #     try:
 #         response = requests.get(url)

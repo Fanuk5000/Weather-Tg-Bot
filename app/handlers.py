@@ -32,7 +32,18 @@ async def answer_not_registered(message:Message):
 
 @router.message(CommandStart())
 async def cmd_start(message:Message):
-    await message.answer("Ласкаво просимо до погодного боту \"FaneraWeather\"!\nВи можете зареєструватись через(/register) ", reply_markup=kb.main)
+    await message.answer("""Ласкаво просимо до погодного боту \"FaneraWeather\"!
+Ви можете зареєструватись через(/register) для постійного моніторингу погоди у вашому місті або просто дізнатись температуру у вашому місті (/weathernow).
+                         """, reply_markup=kb.main)
+
+#register command + state
+@router.message(Command("register"))
+async def register(message: Message, state: FSMContext):
+    if await rq.check_user(message.from_user.id):
+        await message.answer("Ви вже зареєстровані\nЯкщо хочете змінити місто \"/change_city\"")
+    else:
+        await state.set_state(Register.name)
+        await message.answer("Напишіть нікнейм")
 
 @router.message(Command("test"))
 async def cmd_start(message:Message):
@@ -44,8 +55,6 @@ async def cmd_help(message: Message):
     await answer_not_registered(message)
     # await message.answer("You pressed help")
 
-
-
 @router.message(Command("changecity"))
 async def change_city(message: Message, state: FSMContext):
     if await rq.check_user(message.from_user.id):
@@ -54,21 +63,12 @@ async def change_city(message: Message, state: FSMContext):
     else:
         await answer_not_registered(message)
 
-
-
-@router.message(Command("weather"))
-async def register(message: Message, state: FSMContext):
+@router.message(Command("weathernow"))
+async def get_curreant_weather(message: Message, state: FSMContext):
     await state.set_state(Askweather.city)
     await message.answer("Напишіть місто, в якому хочете дізнатись погоду")
 
 
-@router.message(Command("register"))
-async def register(message: Message, state: FSMContext):
-    if await rq.check_user(message.from_user.id):
-        await message.answer("Ви вже зареєстровані\nЯкщо хочете змінити місто \"/change_city\"")
-    else:
-        await state.set_state(Register.name)
-        await message.answer("Напишіть нікнейм")
 
 
 '''States'''
@@ -78,10 +78,10 @@ async def register(message: Message, state: FSMContext):
 async def register(message: Message, state: FSMContext):
     await state.update_data(city = message.text)
     
-    data = await state.get_data()
-    temperature = await get_current_weather(data["city"])
+    state_data = await state.get_data()
+    dict = await get_current_weather(state_data["city"])
     
-    await message.answer(f"Зараз температура {temperature} у {data["city"]} °C")
+    await message.answer(f"Зараз у городі {state_data["city"]} {dict["temp"]} °C й {dict["description"]}")
     await state.clear()
 
 
@@ -124,9 +124,9 @@ async def register_city(message: Message, state: FSMContext):
 async def register(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
-        temperature = await get_current_weather(city)
+        dic = await get_current_weather(city)
         
-        await message.answer(f"Зараз температура {temperature} у {city} °C")
+        await message.answer(f"У городі {city}, зараз {dic["temp"]} °C та {dic["description"]}")
     else:
         await answer_not_registered(message)
     
@@ -148,11 +148,13 @@ async def register(message: Message):
 async def register(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
-        temperature = await get_weather_for_3_days(city)
+        information = await get_weather_for_3_days(city)
         
-        if isinstance(temperature, dict):
-            for date, weather in temperature.items():
+        if isinstance(information, dict):
+            for date, weather in information.items():
                 await message.answer(f"{date}:\n {weather}")
+        else:
+            await message.answer("Api error")
         
         
     else:

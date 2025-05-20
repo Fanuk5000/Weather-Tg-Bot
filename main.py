@@ -4,10 +4,20 @@ from aiogram import Bot, Dispatcher
 from app.handlers import router
 from app.database.models import async_main
 
+from os import getenv
+from dotenv import load_dotenv
+
+
 
 async def main():
+    load_dotenv("config.env")
+    token = getenv("TELEGRAM_BOT_TOKEN")
+    
+    if not token:
+        raise ValueError("TELEGRAM_BOT_TOKEN not found in environment variables.")
+    
     await async_main()
-    bot = Bot(token = '7086621220:AAH5Iysde8_JyKXAXnmtO_u_3tOtufk9VwE')
+    bot = Bot(token)
     dp = Dispatcher()
     dp.include_router(router)
     #await bot.delete_webhook(drop_pending_updates=True)
@@ -15,6 +25,9 @@ async def main():
     
 if __name__ == "__main__":
     try:
+        print("Bot is on")
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Bot is off")
+    except Exception as e:
+        print(e)
