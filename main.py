@@ -26,7 +26,7 @@ async def main():
     
     #await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot) #polling checks if something happend in chat with bot
-    
+
 if __name__ == "__main__":
     try:
         print("Bot is on")

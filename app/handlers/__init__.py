@@ -4,5 +4,5 @@ from .timers import Timers
 
 timers = Timers()
 
-# Combine all routers into one listb
+# Combine all routers into one list
 routers = [buttons_router, commands_router, timers.router]
