@@ -13,9 +13,9 @@ async def answer_not_registered(message:Message):
 async def register(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
-        dic = await get_current_weather(city)
+        weather = await get_current_weather(city)
         
-        await message.answer(f"У городі {city}, зараз {dic["temp"]} °C та {dic["description"]}")
+        await message.answer(weather)
     else:
         await answer_not_registered(message)
     
@@ -23,13 +23,14 @@ async def register(message: Message):
 async def register(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
-        temperature = await get_tomorrow_weather(city)
+        weather = await get_tomorrow_weather(city)
         
         
         await message.answer(f"Завтрашня температура у {city}:")
-        if isinstance(temperature, list):
-            concatenated = "\n".join(temperature[::3])
-            await message.answer(concatenated)
+        await message.answer(weather)
+        # if isinstance(temperature, list):
+        #     concatenated = "\n".join(temperature[::3])
+        #     await message.answer(concatenated)
     else:
         await answer_not_registered(message)
         
@@ -37,13 +38,10 @@ async def register(message: Message):
 async def register(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
-        information = await get_weather_for_3_days(city)
+        weather = await get_weather_for_3_days(city)
         
-        if isinstance(information, dict):
-            for date, weather in information.items():
-                await message.answer(f"{date}:\n {weather}")
-        else:
-            await message.answer("Api error")
+        await message.answer(f"Погода на 3 дні у {city}:")
+        await message.answer(weather)
         
         
     else:

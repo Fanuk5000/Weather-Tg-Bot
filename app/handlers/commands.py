@@ -38,7 +38,7 @@ async def register(message: Message, state: FSMContext):
 async def register_name(message: Message, state: FSMContext):
     await state.update_data(city = message.text)
     data = await state.get_data()
-    await rq.set_user(message.from_user.id, data["city"])
+    await rq.set_user(message.from_user.id, data["city"], await get_city_coordinates(data["city"]))
     await message.answer(f"Ви успішно вказали город!", reply_markup=kb.main)
     await state.clear()
 
@@ -67,7 +67,7 @@ async def change_city(message: Message, state: FSMContext):
 async def changing(message: Message, state: FSMContext):
     await state.update_data(new_city = message.text)
     data = await state.get_data()
-    await rq.change_city(message.from_user.id ,data["new_city"])
+    await rq.change_city(message.from_user.id, data["new_city"], await get_city_coordinates(data["city"]))
     
     await state.clear()
     await message.answer("Місто було успішно змінено")
@@ -84,8 +84,8 @@ async def register(message: Message, state: FSMContext):
     await state.update_data(city = message.text)
     
     state_data = await state.get_data()
-    dict = await get_current_weather(state_data["city"])
+    weather = await get_current_weather(state_data["city"])
     await state.clear()
     
-    await message.answer(f"Зараз у городі {state_data["city"]} {dict["temp"]} °C й {dict["description"]}")
+    await message.answer(weather)
     

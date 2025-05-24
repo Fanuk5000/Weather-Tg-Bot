@@ -16,12 +16,12 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id = mapped_column(BigInteger)
     city: Mapped[str] = mapped_column(String(40))
+    cords: Mapped[str] = mapped_column(String(100))
     plan_time: Mapped[int] = mapped_column(String(5), nullable=True)  # Format HH:MM
-    
     # cords: Mapped[str] = mapped_column(String(100))
 
 
 async def async_main():
     async with engine.begin() as conn:
-        # await conn.run_sync(Base.metadata.drop_all) # to update the database
+        #await conn.run_sync(Base.metadata.drop_all) # to update the database
         await conn.run_sync(Base.metadata.create_all)

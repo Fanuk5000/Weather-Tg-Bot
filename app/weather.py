@@ -4,10 +4,12 @@ from datetime import datetime, timedelta
 from os import getenv
 from dotenv import load_dotenv
 
+from app.database.requests import get_city_cords
+
 load_dotenv("config.env")
 OPEN_WEATHER_TOKEN = getenv("OPEN_WEATHER_TOKEN")
 
-async def get_city_coordinates(city: str) -> tuple:
+async def get_city_coordinates(city: str) -> str:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -19,36 +21,30 @@ async def get_city_coordinates(city: str) -> tuple:
                     if data:
                         lat = data[0]['lat']
                         lon = data[0]['lon']
-                        return str(lat), str(lon)
+                        return f"{str(lat)} {str(lon)}"
                     else:
                         print(f"get_city_coordinates: No location found for city: {city}")
-                        return None, None
+                        return "0 0"
                 else:
                     print(f"get_city_coordinates: Error fetching coordinates: HTTP {response.status}")
-                    return None, None
+                    return "0 0"
     except Exception as e:
         print("get_city_coordinates: Error fetching coordinates:", e)
-        return None, None
+        return "0 0"
 
 
-async def get_current_weather(city: str) -> dict:
+async def get_current_weather(city: str) -> str:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://api.openweathermap.org/data/2.5/weather",
                 params={"q": city, "appid": OPEN_WEATHER_TOKEN, "units": "metric", "lang": "ua"}
             ) as response:
-                dict_info = {}
                 
                 if response.status == 200: #success
                     data = await response.json()
-                    if "main" in data and "temp" in data["main"]:
-                        
-                        dict_info = {"temp": round(data["main"]["temp"]), "description": data["weather"][0]["description"]}
-                        
-                        return dict_info
-                    else:
-                        return f"get_current_weather: Unexpected response structure: {data}"
+                    
+                    return f"Зараз у городі {city} {round(data["main"]["temp"])} °C й {data["weather"][0]["description"]}"
                 elif response.status == 404: #no such page
                     return "get_current_weather: City not found"
                 elif response.status == 429: #too much requests
@@ -61,7 +57,7 @@ async def get_current_weather(city: str) -> dict:
         return f"get_current_weather: An unexpected error occurred: {ex}"
 
 async def get_tomorrow_weather(city) -> dict:
-    lat, lon = await get_city_coordinates(city)
+    lat, lon = await get_city_cords(city)
     if lat is None or lon is None:
         return 
     
@@ -98,8 +94,8 @@ async def get_tomorrow_weather(city) -> dict:
                         
                         if date_str > tomorrow_date:
                             break
-
-                    return days_dict.get(tomorrow_date, ["No weather data available for tomorrow."])
+                    lst = days_dict.get(tomorrow_date, ["No weather data available for tomorrow."])
+                    return "\n".join(lst[::3])
                 
                 elif response.status == 404: #no such page
                     return "City not found"
@@ -113,7 +109,7 @@ async def get_tomorrow_weather(city) -> dict:
         return f"An unexpected error occurred: {ex}"
     
 async def get_weather_for_3_days(city: str) -> dict:
-    lat, lon = await get_city_coordinates(city)
+    lat, lon = await get_city_cords(city)
     if lat is None or lon is None:
         return 
     
@@ -140,9 +136,10 @@ async def get_weather_for_3_days(city: str) -> dict:
                             desc = "Впродовж дня "+days['weather'][0]['description']
                             
                             days_dict[date_str] = (f"Ранок - {morning}°C\n День - {day}°C\n Вечір - {evening}°C\n Ніч - {night}°C\n {desc.capitalize()}")
-
-                    
-                    return days_dict
+                    weather_info = ""
+                    for date, weather in days_dict.items():
+                        weather_info += f"{date}\n{weather}\n\n"
+                    return weather_info
                     
                 elif response.status == 404: #no such page
                     return "City not found"

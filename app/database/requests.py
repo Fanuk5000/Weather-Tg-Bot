@@ -9,11 +9,11 @@ async def set_plan_time(tg_id:int, plan_time:str) -> None:
         
         await session.commit()
 
-async def set_user(tg_id:int, city:str) -> None: 
+async def set_user(tg_id:int, city:str, cords:str) -> None: 
     async with async_session() as session:
         # user = await session.scalar(select(User).where(User.tg_id == tg_id))
 
-        session.add(User(tg_id = tg_id, city = city))
+        session.add(User(tg_id = tg_id, city = city, cords = cords))
         await session.commit()
         
 async def check_user(tg_id:int) -> bool:
@@ -37,4 +37,12 @@ async def get_user_city(tg_id:int):
             return user.city
         else:
             return None
-    
+
+async def get_city_cords(city:str) -> tuple[int, int] | None:
+    async with async_session() as session:
+        city = await session.scalar(select(User).where(User.city == city))
+        
+        if city:
+            return map(float, str(city.cords).split(" "))
+        else:
+            return None
