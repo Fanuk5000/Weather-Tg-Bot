@@ -2,11 +2,18 @@ from app.database.models import async_session
 from app.database.models import User
 from sqlalchemy import select
 
-async def set_user(tg_id:int, name:str, city:str) -> None: 
+async def set_plan_time(tg_id:int, plan_time:str) -> None:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        user.plan_time = plan_time
+        
+        await session.commit()
 
-        session.add(User(tg_id = tg_id, name = name, city = city))
+async def set_user(tg_id:int, city:str) -> None: 
+    async with async_session() as session:
+        # user = await session.scalar(select(User).where(User.tg_id == tg_id))
+
+        session.add(User(tg_id = tg_id, city = city))
         await session.commit()
         
 async def check_user(tg_id:int) -> bool:

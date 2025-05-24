@@ -15,8 +15,9 @@ class User(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id = mapped_column(BigInteger)
-    name: Mapped[str] = mapped_column(String(25))
     city: Mapped[str] = mapped_column(String(40))
+    plan_time: Mapped[int] = mapped_column(String(5), nullable=True)  # Format HH:MM
+    
     # cords: Mapped[str] = mapped_column(String(100))
 
 
