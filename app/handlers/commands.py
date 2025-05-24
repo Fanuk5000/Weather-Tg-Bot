@@ -67,7 +67,7 @@ async def change_city(message: Message, state: FSMContext):
 async def changing(message: Message, state: FSMContext):
     await state.update_data(new_city = message.text)
     data = await state.get_data()
-    await rq.change_city(message.from_user.id, data["new_city"], await get_city_coordinates(data["city"]))
+    await rq.change_city(message.from_user.id, data["new_city"], await get_city_coordinates(data["new_city"]))
     
     await state.clear()
     await message.answer("Місто було успішно змінено")

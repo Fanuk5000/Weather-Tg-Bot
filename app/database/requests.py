@@ -21,11 +21,12 @@ async def check_user(tg_id:int) -> bool:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         return bool(user)
 
-async def change_city(tg_id:int, new_city:str) -> bool:
+async def change_city(tg_id:int, new_city:str, cords:str) -> bool:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         
         user.city = new_city
+        user.cords = cords
         await session.commit()
 
     

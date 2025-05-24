@@ -59,7 +59,7 @@ class Timers:
             while Timers.plan_timer_working:
                 print(Timers.plan_timer_working)
                 current_time = datetime.now().strftime("%H:%M")
-                if current_time == data["time"]:
+                if current_time <= data["time"]:
                     await message.answer("Час вийшов! Пора перевірити погоду!")
                     Timers.plan_timer_working = False
                     await rq.set_plan_time(message.from_user.id, None)
