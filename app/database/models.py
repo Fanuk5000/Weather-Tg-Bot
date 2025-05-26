@@ -21,7 +21,7 @@ class User(Base):
     # cords: Mapped[str] = mapped_column(String(100))
 
 
-async def async_main():
+async def async_database():
     async with engine.begin() as conn:
         #await conn.run_sync(Base.metadata.drop_all) # to update the database
         await conn.run_sync(Base.metadata.create_all)

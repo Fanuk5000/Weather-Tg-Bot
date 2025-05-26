@@ -56,6 +56,58 @@ async def get_current_weather(city: str) -> str:
     except Exception as ex:
         return f"get_current_weather: An unexpected error occurred: {ex}"
 
+async def get_weather_to_end(city) -> dict:
+    lat, lon = await get_city_cords(city)
+    if lat is None or lon is None:
+        return
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"https://api.openweathermap.org/data/3.0/onecall",
+                params={"lat": lat, "lon": lon, "appid": OPEN_WEATHER_TOKEN, "exclude": "minutely,daily,current,alerts", "units": "metric", "lang": "ua" }
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    hourly = data['hourly']
+
+                    # Get tomorrow's date
+                    global tomorrow_date
+                    current_date = (datetime.now()).strftime('%d-%m-%Y')
+                    days_dict = {}
+
+                    
+                    for entry in hourly:
+                        dt = datetime.fromtimestamp(entry['dt'])
+                        date_str = dt.strftime('%d-%m-%Y')
+                        time_str = dt.strftime('%H:%M')
+
+                        # Filter for tomorrow's datej
+                        if date_str == current_date:
+                            temp = round(entry['temp'])
+                            desc = entry['weather'][0]['description']
+                        
+                            if date_str not in days_dict:
+                                days_dict[date_str] = []
+                            
+                            days_dict[date_str].append(f"{time_str} — {temp}°C — {desc.capitalize()}")
+                        
+                        if date_str > current_date:
+                            break
+                    lst = days_dict.get(current_date, ["No weather data available for tomorrow."])
+                    return current_date+"\n"+"\n".join(lst[::3])
+                
+                elif response.status == 404: #no such page
+                    return "City not found"
+                elif response.status == 429: #too much requests
+                    return "Rate limit exceeded. Please try again later."
+                else:
+                    return f"Error: {response.status} - {await response.text()}"
+    except aiohttp.ClientError as ex:
+        return f"Network error: {ex}"
+    except Exception as ex:
+        return f"An unexpected error occurred: {ex}"
+
 async def get_tomorrow_weather(city) -> dict:
     lat, lon = await get_city_cords(city)
     if lat is None or lon is None:
@@ -95,7 +147,7 @@ async def get_tomorrow_weather(city) -> dict:
                         if date_str > tomorrow_date:
                             break
                     lst = days_dict.get(tomorrow_date, ["No weather data available for tomorrow."])
-                    return "\n".join(lst[::3])
+                    return tomorrow_date+"\n"+"\n".join(lst[::3])
                 
                 elif response.status == 404: #no such page
                     return "City not found"
