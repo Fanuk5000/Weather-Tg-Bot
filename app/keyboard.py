@@ -4,14 +4,16 @@ from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Поточна",)],
-                                     [KeyboardButton(text="До кінця дня")],
-                                     [KeyboardButton(text="Завтрашня")],
-                                     [KeyboardButton(text="3 дні")],
+main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Поточна",),KeyboardButton(text="До кінця дня")],
+                                     [KeyboardButton(text="Завтрашня"), KeyboardButton(text="3 дні")],
                                      ],
                            resize_keyboard=True,
-                           input_field_placeholder="For when a weather")
+                           input_field_placeholder="Оберіть на коли потрібна погода",)
 
-get_city = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Send city",
-                                                         request_location=True)]],
-                               resize_keyboard=True)
+plan_time_keys = InlineKeyboardMarkup(
+    inline_keyboard=[[InlineKeyboardButton(text="Запустити", callback_data="enable_plan_timer"),
+                      InlineKeyboardButton(text="Інфо", callback_data="timer_info")],
+            [InlineKeyboardButton(text="Встановити час", callback_data="plan_timer"),
+            InlineKeyboardButton(text="Зупинити", callback_data="stop_plan_timer"),
+            InlineKeyboardButton(text="Інтервал", callback_data="interval_plan_timer")]
+                    ])

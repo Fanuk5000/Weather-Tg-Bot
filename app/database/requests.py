@@ -48,7 +48,16 @@ async def get_city_cords(city:str) -> tuple[int, int] | None:
     async with async_session() as session:
         city = await session.scalar(select(User).where(User.city == city))
         
-        if city:
+        if city.cords:
             return map(float, str(city.cords).split(" "))
         else:
             return None
+        
+async def get_plan_time(tg_id:int) -> str | bool:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        
+        if user.plan_time:
+            return str(user.plan_time)
+        else:
+            return False

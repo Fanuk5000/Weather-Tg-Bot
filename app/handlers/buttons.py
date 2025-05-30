@@ -36,7 +36,6 @@ async def register(message: Message):
         city = await rq.get_user_city(message.from_user.id)
         weather = await get_tomorrow_weather(city)
         
-        await message.answer(f"Aga: {message.chat.id}")
         await message.answer(f"Завтрашня температура у {city}:")
         await message.answer(weather)
     else:

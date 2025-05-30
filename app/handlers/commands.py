@@ -16,7 +16,7 @@ class WeatherNow(StatesGroup):
 #-------------start command-----------------
 @commands_router.message(CommandStart())
 async def cmd_start(message:Message):
-    await message.answer("""Ласкаво просимо до погодного боту \"FaneraWeather\"!
+    await message.answer("""Ласкаво просимо до погодного боту «FaneraWeather»!
 Ви можете обрати город(/setcity) для постійного моніторингу погоди у вашому місті або просто дізнатись температуру у вашому місті (/weathernow).
                          """, reply_markup=kb.main)
 
