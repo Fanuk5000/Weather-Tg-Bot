@@ -46,8 +46,7 @@ async def register_name(message: Message, state: FSMContext):
 #---------test command-----------------
 @commands_router.message(Command("test"))
 async def cmd_start(message:Message):
-    # await message.answer(str(await get_city_coordinates("Kyiv")))
-    await get_city_coordinates("Kyiv")
+    await rq.set_plan_time(message.from_user.id, None)
 
 #---------help command-----------------
 @commands_router.message(Command("help"))

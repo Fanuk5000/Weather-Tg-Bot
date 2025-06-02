@@ -12,8 +12,9 @@ main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Поточна",),Key
 
 plan_time_keys = InlineKeyboardMarkup(
     inline_keyboard=[[InlineKeyboardButton(text="Запустити", callback_data="enable_plan_timer"),
-                      InlineKeyboardButton(text="Інфо", callback_data="timer_info")],
+                      InlineKeyboardButton(text="Зупинити", callback_data="stop_plan_timer"),
+                      InlineKeyboardButton(text="Формат погоди", callback_data="weather_format")],
             [InlineKeyboardButton(text="Встановити час", callback_data="plan_timer"),
-            InlineKeyboardButton(text="Зупинити", callback_data="stop_plan_timer"),
-            InlineKeyboardButton(text="Інтервал", callback_data="interval_plan_timer")]
+            InlineKeyboardButton(text="Інтервал", callback_data="interval_plan_timer"),
+            InlineKeyboardButton(text="Інфо", callback_data="timer_info")]
                     ])

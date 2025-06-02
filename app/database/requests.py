@@ -2,10 +2,42 @@ from app.database.models import async_session
 from app.database.models import User
 from sqlalchemy import select
 
-async def set_plan_time(tg_id:int, plan_time:str) -> None:
+async def set_days_interval(tg_id:int, days:int) -> None:
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
-        user.plan_time = plan_time
+        user.days_interval = days
+        
+        await session.commit()
+
+async def set_weather_format(tg_id:int, format:int) -> None:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        user.weather_format = format
+        
+        await session.commit()
+
+async def get_days_interval(tg_id:int) -> int:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        
+        if user.days_interval:
+            return user.days_interval
+        else:
+            return 0 # Default interval
+
+async def get_weather_format(tg_id:int) -> int:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        
+        if user.weather_format:
+            return user.weather_format
+        else:
+            return 1  # Default format
+
+async def set_plan_time(tg_id:int, new_plan_time:str) -> None:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        user.plan_time = new_plan_time
         
         await session.commit()
 

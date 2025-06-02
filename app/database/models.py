@@ -18,6 +18,8 @@ class User(Base):
     city: Mapped[str] = mapped_column(String(40))
     cords: Mapped[str] = mapped_column(String(100))
     plan_time: Mapped[int] = mapped_column(String(5), nullable=True)  # Format HH:MM
+    days_interval: Mapped[int] = mapped_column(default=0)
+    weather_format: Mapped[int] = mapped_column(default=1)  # Default to 1 (Current
     # cords: Mapped[str] = mapped_column(String(100))
 
 
