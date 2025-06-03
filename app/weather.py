@@ -57,9 +57,9 @@ async def get_current_weather(city: str) -> str:
         return f"get_current_weather: An unexpected error occurred: {ex}"
 
 async def get_weather_to_end(city) -> dict:
-    lat, lon = await get_city_cords(city)
+    lat, lon = await get_city_cords(city) #from db
     if lat is None or lon is None:
-        return
+        return "City not found"
     
     try:
         async with aiohttp.ClientSession() as session:
@@ -203,49 +203,3 @@ async def get_weather_for_3_days(city: str) -> dict:
         return f"Network error: {ex}"
     except Exception as ex:
         return f"An unexpected error occurred: {ex}"
-
-# async def get_tomorrow_weather(city) -> list:
-#     lat, lon = await get_city_coordinates(city)
-#     if lat is None or lon is None:
-#         return 
-
-
-
-# def get_tomorrow_weather(lat, lon):
-#     url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=minutely,daily,current,alerts&appid={OPEN_WEATHER_TOKEN}&units=metric"
-    
-#     try:
-#         response = requests.get(url)
-#         data = response.json()
-#         hourly = data['hourly']
-#         print(f"\n[ {name} - Tomorrow's Weather ]\n")
-
-#         # Get tomorrow's date
-#         tomorrow_date = (datetime.now() + timedelta(days=1)).strftime('%d-%m-%Y')
-#         days_dict = {}
-
-#         count = 0
-        
-#         for entry in hourly[::3]:
-#             dt = datetime.fromtimestamp(entry['dt'])
-#             date_str = dt.strftime('%d-%m-%Y')
-#             time_str = dt.strftime('%H:%M')
-
-#             # Filter for tomorrow's date
-#             if date_str == tomorrow_date:
-#                 temp = round(entry['temp'], 1)
-#                 desc = entry['weather'][0]['description']
-
-#                 if date_str not in days_dict:
-#                     days_dict[date_str] = []
-
-#                 days_dict[date_str].append(f"{time_str} — {temp}°C — {desc}")
-
-#         # Print tomorrow's weather
-#         for date, entries in days_dict.items():
-#             print(f"\n{date}")
-#             for line in entries:
-#                 print("  " + line)
-
-#     except Exception as e:
-#         print("Error getting tomorrow's weather:", e)

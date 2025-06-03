@@ -8,10 +8,6 @@ from app.database.models import async_database
 from os import getenv
 from dotenv import load_dotenv
 
-
-
-
-
 async def main():
     load_dotenv("config.env")
     token = getenv("TELEGRAM_BOT_TOKEN")
@@ -29,16 +25,11 @@ async def main():
     
     await dp.start_polling(bot)  # Start polling
 
-async def end_message_to_users():
-    await bot.send_message(1094008377, "⚠️ Бота було вимкнено. Всі таймери не працюють після повторного запуску!\n\n")
-    
 if __name__ == "__main__":
     try:
         print("Bot is on")
         asyncio.run(main())
     except KeyboardInterrupt:
-        asyncio.run(end_message_to_users())
-        asyncio.run(bot.session.close())
         print("Bot is off")
     except Exception as e:
         print(e)
