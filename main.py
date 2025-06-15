@@ -2,6 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 
 from app.handlers import routers
+from app.handlers import set_bot
 
 from app.database.models import async_database
 
@@ -19,6 +20,7 @@ async def main():
     global bot
     bot = Bot(token)
     dp = Dispatcher()
+    set_bot(bot)  # Set the bot in the handlers
     
     for router in routers:
         dp.include_router(router)

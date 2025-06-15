@@ -1,5 +1,6 @@
 from .common_imports import *
 from asyncio import sleep
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from datetime import datetime
 
@@ -12,9 +13,11 @@ class Timers:
         
     
     def __init__(self):
+        self.bot = None
         self.plan_timer_working = False
         self.router = Router()
         self.TIME_TO_DELETE = 5
+        self.scheduler = AsyncIOScheduler()
 
         self.router.message.register(self.plan_timer_menu, Command("timermenu"))
         # self.router.message.register(self.stop_plan_timer, Command("stopplantimer"))
@@ -41,9 +44,12 @@ class Timers:
     
     # Callback for the plan timer
     async def callback_plan_timer(self, callback: CallbackQuery, state: FSMContext):
-        
         if await rq.check_user(callback.from_user.id) is False:
             await callback.message.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
+            return
+        
+        if self.plan_timer_working:
+            await callback.answer("Таймер вже запущено, зупиніть його перед встановленням нового часу")
             return
         
         await state.set_state(Timers.PlanTimer.time)
@@ -63,16 +69,16 @@ class Timers:
             if hour < 0 or hour > 23 or minute < 0 or minute > 59:
                 raise ValueError("Invalid time format")
         except ValueError:
-            temp_message = await message.answer("Невірний формат часу. Спробуйте ще раз(/plantimer)")
+            temp_message = await message.answer("Невірний формат часу. Спробуйте ще раз")
         except Exception as e:
-            temp_message = await message.answer("Щось пішло не так. Спробуйте ще раз(/plantimer)")
+            temp_message = await message.answer("Щось пішло не так. Спробуйте ще раз")
             print(e)
         else:
-            self.plan_timer_working = True
             await rq.set_plan_time(message.from_user.id, data["time"])
-            await state.clear()
             
-            temp_message = await message.answer(f"Таймер заплановано на {data['time']}, тепер можна його запустити")
+            temp_message = await message.answer(f"Таймер заплановано на {data['time']}, тепер можна його запустити")\
+        
+        await state.clear()
         await sleep(self.TIME_TO_DELETE)
         await temp_message.delete()
         await message.delete()
@@ -91,8 +97,9 @@ class Timers:
         
         temp_message = await callback.message.answer(f"Зараз таймер <b>{on_off}</b>, час якого <b>{planned_time}</b>.\n"
                                       f"З інтервалом кожні <b>{interval}</b> днів(якщо 0 таймер одноразовий) та форматом <b>{formats[weather_format-1]}</b>", parse_mode="HTML")
-        await sleep(15)
+        await sleep(10)
         await temp_message.delete()
+        await callback.answer("")
         
     
     # Stop the plan timer
@@ -103,11 +110,11 @@ class Timers:
         
         if self.plan_timer_working:
             self.plan_timer_working = False
+            self.scheduler.remove_job(f"weather_timer_{callback.from_user.id}")
             await callback.answer("Таймер зупинено")
         else:
             await callback.answer("Таймер не запущено")
     
-    # Repeat the plan timer every 24 hours
     async def interval_plan_timer(self, callback: CallbackQuery, state: FSMContext):
         if await rq.check_user(callback.from_user.id) is False:
             await callback.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
@@ -130,14 +137,16 @@ class Timers:
         
         try:
             reapeat_in_days = int(data["days"].strip())
-            if reapeat_in_days < 1:
+            if reapeat_in_days < 0:
                 raise ValueError("Days must be greater than 0")
             await rq.set_days_interval(message.from_user.id, reapeat_in_days)
-            await state.clear()
-            temp_message = await message.answer(f"Таймер буде повторюватись кожні {reapeat_in_days} днів")
+            interval = f"буде повторюватись кожні {reapeat_in_days} днів" if reapeat_in_days > 0 else "одноразовий"
+            
+            temp_message = await message.answer(f"Таймер {interval}")
         except ValueError:
-            temp_message = await message.answer("Невірний формат. Введіть число днів більше 0 або ціле число.")
-        
+            temp_message = await message.answer("Невірний формат."
+                                                "Введіть невід'ємні цілі числа")
+        await state.clear()
         await sleep(self.TIME_TO_DELETE)
         await temp_message.delete()
         await message.delete()
@@ -145,46 +154,61 @@ class Timers:
     
     # Enable the plan timer and start checking the time
     async def enable_plan_timer(self, callback: CallbackQuery):
+        if self.plan_timer_working:
+            await callback.answer("Таймер вже запущено")
+            return
+        
         plan_time = await rq.get_plan_time(callback.from_user.id)
         if not plan_time:
             await callback.answer("Час не встановлено, встановіть його.")
             return
         
-        day_counter = 0
         self.plan_timer_working = True
         
+        city = await rq.get_user_city(callback.from_user.id)
         reapeat_in_days = await rq.get_days_interval(callback.from_user.id)
         weather_format = await rq.get_weather_format(callback.from_user.id)
         
-        city = await rq.get_user_city(callback.from_user.id)
+        plan_hour, plan_minute = map(int, plan_time.split(":"))
+        chat_id = callback.from_user.id
         
         await callback.answer(
             f"Таймер запущено, він буде працювати {'кожні ' + str(reapeat_in_days) + ' днів' if reapeat_in_days else 'один раз'}"
         )
-        
+        if reapeat_in_days == 0:
+            self.scheduler.add_job(self.send_weather_update, "cron", hour=plan_hour,
+                                   minute = plan_minute, args=[chat_id, city, weather_format, reapeat_in_days],
+                                   id=f"weather_timer_{chat_id}", replace_existing=True)
+        else:
+            self.scheduler.add_job(self.send_weather_update, "interval", days=reapeat_in_days,
+                                   start_date=datetime.now().replace(hour=plan_hour, minute=plan_minute, second=0, microsecond=0),
+                                   replace_existing=True,
+                                   args=[chat_id, city, weather_format, reapeat_in_days],
+                                   id=f"weather_timer_{chat_id}")
+        self.scheduler.start()
+    
+    async def send_weather_update(self, chat_id: int, city:str,
+                                  weather_format:int, reapeat_in_days:int):
         weather_functions = {
             1: get_current_weather,
-            2: get_tomorrow_weather,
-            3: get_weather_for_3_days,
-            4: get_weather_to_end,
+            2: get_weather_to_end,
+            3: get_tomorrow_weather,
+            4: get_weather_for_3_days
         }
         
-        while self.plan_timer_working:
-            print(f"Timer working: {self.plan_timer_working}")
-            current_time = datetime.now().strftime("%H:%M")
-            if current_time == plan_time:
-                if reapeat_in_days == 0 or day_counter%reapeat_in_days == 0:
-                    weather = await weather_functions.get(weather_format, lambda _: "Яким хуэм ти це зробив? Такого формату не існує")(city)
-                    await callback.message.answer(f"Погода в місті {city}:\n{weather}")
-                
-                if reapeat_in_days == 0:
-                    self.plan_timer_working = False
-                else:
-                    if day_counter == reapeat_in_days:
-                        day_counter = 0
-                    else:
-                        day_counter += 1
-            await sleep(59)
+        weather = await weather_functions.get(weather_format, lambda _:
+            "Яким чином ти це зробив? Такого формату не існує")(city)
+
+        repeat_or_not = "Одноразовий таймер" if reapeat_in_days == 0 else f"Таймер повториться через {reapeat_in_days} {"день" if reapeat_in_days == 1 else "днів"}"
+        
+        await self.bot.send_message(chat_id, text=f"Погода в місті {city}:\n\n{weather}\n\n{repeat_or_not}.\n")
+        
+        if reapeat_in_days == 0:
+            self.plan_timer_working = False
+            self.scheduler.remove_job(f"weather_timer_{chat_id}")
+            await self.bot.send_message(chat_id, text="Таймер зупинено після одноразового сповіщення")
+        else:
+            await self.bot.send_message(chat_id, text=f"Таймер спрацював, наступне сповіщення буде через {reapeat_in_days} днів")
         
     async def weather_format(self, callback: CallbackQuery, state: FSMContext):
         if await rq.check_user(callback.from_user.id) is False:
@@ -221,3 +245,6 @@ class Timers:
         await sleep(self.TIME_TO_DELETE)
         await temp_message.delete()
         await message.delete()
+    
+    def set_bot(self, bot):
+        self.bot = bot
