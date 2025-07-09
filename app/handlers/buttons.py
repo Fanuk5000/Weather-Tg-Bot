@@ -10,7 +10,7 @@ async def answer_not_registered(message:Message):
     await message.answer("Щоб користуватись кнопками, вкажіть город город(/setcity) button", reply_markup=kb.main)
 
 @buttons_router.message(F.text == "Поточна")
-async def register(message: Message):
+async def current_weather_button(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
         weather = await get_current_weather(city)
@@ -20,7 +20,7 @@ async def register(message: Message):
         await answer_not_registered(message)
 
 @buttons_router.message(F.text == "До кінця дня")
-async def register(message: Message):
+async def weather_to_end_button(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
         weather = await get_weather_to_end(city)
@@ -31,7 +31,7 @@ async def register(message: Message):
         await answer_not_registered(message)
 
 @buttons_router.message(F.text == "Завтрашня")
-async def register(message: Message):
+async def tomorrow_weather_button(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
         weather = await get_tomorrow_weather(city)
@@ -42,7 +42,7 @@ async def register(message: Message):
         await answer_not_registered(message)
         
 @buttons_router.message(F.text == "3 дні")
-async def register(message: Message):
+async def weather_for_3_days_button(message: Message):
     if await rq.check_user(message.from_user.id):
         city = await rq.get_user_city(message.from_user.id)
         weather = await get_weather_for_3_days(city)

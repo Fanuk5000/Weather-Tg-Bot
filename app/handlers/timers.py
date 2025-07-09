@@ -14,14 +14,13 @@ class Timers:
     
     def __init__(self):
         self.bot = None
-        self.plan_timer_working = False
         self.router = Router()
-        self.TIME_TO_DELETE = 5
         self.scheduler = AsyncIOScheduler()
-
+        
         self.router.message.register(self.plan_timer_menu, Command("timermenu"))
-        # self.router.message.register(self.stop_plan_timer, Command("stopplantimer"))
-        self.router.message.register(self.stop_plan_timer, Command("repeatplantimer"))
+        self.router.message.register(self.stop_plan_timer, Command("stopplantimer"))
+        self.router.message.register(self.enable_plan_timer, Command("enableplantimer"))
+        
         self.router.message.register(self.handle_plan_timer, Timers.PlanTimer.time)
         self.router.message.register(self.handle_interval_days, Timers.PlanTimer.days)
         self.router.message.register(self.handle_weather_format, Timers.PlanTimer.format_time)
@@ -33,34 +32,36 @@ class Timers:
         self.router.callback_query.register(self.weather_format, F.data == "weather_format")
         self.router.callback_query.register(self.timer_info, F.data == "timer_info")
         self.router.callback_query.register(self.interval_plan_timer, F.data == "interval_plan_timer")
-        
+
+    async def __check_users_timer(self, event: Message | CallbackQuery)-> bool: 
+        """Helper method that checks if user has a timer"""
+        return bool(self.scheduler.get_job(event.from_user.id))
+    
     async def plan_timer_menu(self, message: Message):
-        if await rq.check_user(message.from_user.id) is False:
-            await message.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
+        if await self.__check_user_city(message):
             return
         
         await message.answer("Меню для користування таймером.\nЩоб подивитись функціонал, дивиться \"Інфо\".",
                              parse_mode="HTML", reply_markup=kb.plan_time_keys)
+        await self.temp_stuff()
     
     # Callback for the plan timer
     async def callback_plan_timer(self, callback: CallbackQuery, state: FSMContext):
-        if await rq.check_user(callback.from_user.id) is False:
-            await callback.message.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
+        """Checks if user exit and sets a state to take info from user in tg(some text)"""
+        if await self.__check_user_city(callback):
             return
         
-        if self.plan_timer_working:
-            await callback.answer("Таймер вже запущено, зупиніть його перед встановленням нового часу")
+        if await self.__check_users_timer(callback):
             return
         
         await state.set_state(Timers.PlanTimer.time)
         temp_message = await callback.message.answer("Введіть час у форматі 00:00")
         
-        await sleep(self.TIME_TO_DELETE)
-        await temp_message.delete()
-        await callback.answer("")
+        await self.__message_deleter(callback, temp_message)
 
     # Handle the time input for the plan timer
     async def handle_plan_timer(self, message: Message, state: FSMContext):
+        """Sets a time in format 00:00 if valid of course"""
         await state.update_data(time = message.text)
         data = await state.get_data()
         
@@ -79,45 +80,45 @@ class Timers:
             temp_message = await message.answer(f"Таймер заплановано на {data['time']}, тепер можна його запустити")\
         
         await state.clear()
-        await sleep(self.TIME_TO_DELETE)
-        await temp_message.delete()
-        await message.delete()
+        await self.__message_deleter(message, temp_message, True)
     
     async def timer_info(self, callback: CallbackQuery):
-        if await rq.check_user(callback.from_user.id) is False:
-            await callback.message.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
+        """Shows a general information menu about weather, or to be more precise state of timer
+        is it on/off, time is """
+        if await self.__check_user_city(callback):
             return
         
         time = await rq.get_plan_time(callback.from_user.id)
         planned_time = f"встановлено на {time}" if time  else "не встановлено"
-        on_off = "включений" if self.plan_timer_working else "вимкнений"
+        
+        on_off = "включений" if await self.__check_users_timer(callback) else "вимкнений"
         interval = await rq.get_days_interval(callback.from_user.id)
         formats = ["Поточна погода", "Погода на завтра", "Погода на 3 дні", "Погода до кінця дня"]
+        
         weather_format = await rq.get_weather_format(callback.from_user.id)
         
         temp_message = await callback.message.answer(f"Зараз таймер <b>{on_off}</b>, час якого <b>{planned_time}</b>.\n"
                                       f"З інтервалом кожні <b>{interval}</b> днів(якщо 0 таймер одноразовий) та форматом <b>{formats[weather_format-1]}</b>", parse_mode="HTML")
-        await sleep(10)
-        await temp_message.delete()
-        await callback.answer("")
+        
+        await self.__message_deleter(callback, temp_message, time_to_delete = 8)
         
     
     # Stop the plan timer
     async def stop_plan_timer(self, callback: CallbackQuery):
-        if await rq.check_user(callback.from_user.id) is False:
-            await callback.message.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
+        """Removes scheduled timer jod with your chat id"""
+        if await self.__check_user_city(callback):
             return
         
-        if self.plan_timer_working:
-            self.plan_timer_working = False
+        if await self.__check_users_timer(callback):
             self.scheduler.remove_job(f"weather_timer_{callback.from_user.id}")
+            
             await callback.answer("Таймер зупинено")
         else:
             await callback.answer("Таймер не запущено")
     
     async def interval_plan_timer(self, callback: CallbackQuery, state: FSMContext):
-        if await rq.check_user(callback.from_user.id) is False:
-            await callback.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
+        """Method to set interval """
+        if await self.__check_user_city(callback):
             return
         
         if await rq.check_plan_time(callback.from_user.id) is False:
@@ -127,11 +128,10 @@ class Timers:
         await state.set_state(Timers.PlanTimer.days)
         temp_message = await callback.message.answer("Введіть переодичність таймера в днях")
         
-        await sleep(self.TIME_TO_DELETE)
-        await temp_message.delete()
-        await callback.answer("")
+        await self.__message_deleter(callback, temp_message)
     
     async def handle_interval_days(self, message:Message, state: FSMContext):
+        """State for intervals"""
         await state.update_data(days =  message.text)
         data = await state.get_data()
         
@@ -147,24 +147,19 @@ class Timers:
             temp_message = await message.answer("Невірний формат."
                                                 "Введіть невід'ємні цілі числа")
         await state.clear()
-        await sleep(self.TIME_TO_DELETE)
-        await temp_message.delete()
-        await message.delete()
-
-    
+        await self.__message_deleter(message, temp_message, True)
+      
     # Enable the plan timer and start checking the time
     async def enable_plan_timer(self, callback: CallbackQuery):
-        if self.plan_timer_working:
-            await callback.answer("Таймер вже запущено")
+        """Enables scheduled timer if you have set city and time"""
+        if await self.__check_user_city(callback):
             return
         
         plan_time = await rq.get_plan_time(callback.from_user.id)
         if not plan_time:
             await callback.answer("Час не встановлено, встановіть його.")
             return
-        
-        self.plan_timer_working = True
-        
+                
         city = await rq.get_user_city(callback.from_user.id)
         reapeat_in_days = await rq.get_days_interval(callback.from_user.id)
         weather_format = await rq.get_weather_format(callback.from_user.id)
@@ -173,8 +168,9 @@ class Timers:
         chat_id = callback.from_user.id
         
         await callback.answer(
-            f"Таймер запущено, він буде працювати {'кожні ' + str(reapeat_in_days) + ' днів' if reapeat_in_days else 'один раз'}"
+            f"Таймер запущено, він буде працювати {f'кожні {str(reapeat_in_days)} днів' if reapeat_in_days > 0 else 'один раз'}"
         )
+              
         if reapeat_in_days == 0:
             self.scheduler.add_job(self.send_weather_update, "cron", hour=plan_hour,
                                    minute = plan_minute, args=[chat_id, city, weather_format, reapeat_in_days],
@@ -185,10 +181,15 @@ class Timers:
                                    replace_existing=True,
                                    args=[chat_id, city, weather_format, reapeat_in_days],
                                    id=f"weather_timer_{chat_id}")
-        self.scheduler.start()
+        
+        if not self.scheduler.running:
+            self.scheduler.start()
+        
     
+    # Helper  method to send weather update
     async def send_weather_update(self, chat_id: int, city:str,
                                   weather_format:int, reapeat_in_days:int):
+        """Helper funtion for scheduled timer"""
         weather_functions = {
             1: get_current_weather,
             2: get_weather_to_end,
@@ -204,15 +205,10 @@ class Timers:
         await self.bot.send_message(chat_id, text=f"Погода в місті {city}:\n\n{weather}\n\n{repeat_or_not}.\n")
         
         if reapeat_in_days == 0:
-            self.plan_timer_working = False
             self.scheduler.remove_job(f"weather_timer_{chat_id}")
-            await self.bot.send_message(chat_id, text="Таймер зупинено після одноразового сповіщення")
-        else:
-            await self.bot.send_message(chat_id, text=f"Таймер спрацював, наступне сповіщення буде через {reapeat_in_days} днів")
         
     async def weather_format(self, callback: CallbackQuery, state: FSMContext):
-        if await rq.check_user(callback.from_user.id) is False:
-            temp_message1 = await callback.message.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
+        if await self.__check_user_city(callback):
             return
         
         await state.set_state(Timers.PlanTimer.format_time)
@@ -222,11 +218,10 @@ class Timers:
                              "3. Погода на завтра\n"
                              "4. Погода на 3 дні")
         
-        await callback.answer("")
-        await sleep(self.TIME_TO_DELETE)
-        await temp_message1.delete()
+        await self.__message_deleter(callback, temp_message1)
      
     async def handle_weather_format(self, message: Message, state: FSMContext):
+        """Handles weather in 4 integer formats"""
         await state.update_data(format_time = message.text)
         data = await state.get_data()
         
@@ -242,9 +237,26 @@ class Timers:
             temp_message = await message.answer("Щось пішло не так. Спробуйте ще раз.")
         
         await state.clear()
-        await sleep(self.TIME_TO_DELETE)
+        await self.__message_deleter(message, temp_message, True)
+    
+    async def __check_user_city(self, event:Message | CallbackQuery) -> bool:
+        """Check if telegram user id is in data base. Returns true if user not in data base."""
+        if await rq.check_user(event.from_user.id) is False:
+            temp_message = await event.answer("Щоб користуватись таймером, вкажіть город(/setcity)")
+            await self.__message_deleter(event, temp_message)
+            return True
+        return False
+        
+    async def __message_deleter(self, event:Message | CallbackQuery, temp_message:Message | bool,
+                                del_user_message:bool=False, time_to_delete:float=5) -> None:
+        """Delets telegram message in timer menu after 5 seconds left. This is time on default"""
+        await sleep(time_to_delete)
         await temp_message.delete()
-        await message.delete()
+        if del_user_message and isinstance(event, Message):
+            await event.delete()
+        
+        if isinstance(event, CallbackQuery):
+            await event.answer("")
     
     def set_bot(self, bot):
         self.bot = bot

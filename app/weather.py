@@ -9,7 +9,8 @@ from app.database.requests import get_city_cords
 load_dotenv("config.env")
 OPEN_WEATHER_TOKEN = getenv("OPEN_WEATHER_TOKEN")
 
-async def get_city_coordinates(city: str) -> str:
+#helper function to get city coordinates
+async def get_city_coordinates(city: str) -> str: 
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -56,7 +57,7 @@ async def get_current_weather(city: str) -> str:
     except Exception as ex:
         return f"get_current_weather: An unexpected error occurred: {ex}"
 
-async def get_weather_to_end(city) -> dict:
+async def get_weather_to_end(city) -> str:
     lat, lon = await get_city_cords(city) #from db
     if lat is None or lon is None:
         return "City not found"
@@ -108,10 +109,10 @@ async def get_weather_to_end(city) -> dict:
     except Exception as ex:
         return f"An unexpected error occurred: {ex}"
 
-async def get_tomorrow_weather(city) -> dict:
+async def get_tomorrow_weather(city) -> str:
     lat, lon = await get_city_cords(city)
     if lat is None or lon is None:
-        return 
+        return
     
     try:
         async with aiohttp.ClientSession() as session:
@@ -160,7 +161,7 @@ async def get_tomorrow_weather(city) -> dict:
     except Exception as ex:
         return f"An unexpected error occurred: {ex}"
     
-async def get_weather_for_3_days(city: str) -> dict:
+async def get_weather_for_3_days(city: str) -> str:
     lat, lon = await get_city_cords(city)
     if lat is None or lon is None:
         return 
