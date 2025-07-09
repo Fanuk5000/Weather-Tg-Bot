@@ -15,7 +15,7 @@ class WeatherNow(StatesGroup):
 
 #-------------start command-----------------
 @commands_router.message(CommandStart())
-async def cmd_start(message:Message):
+async def comand_start(message:Message):
     await message.answer("""Ласкаво просимо до погодного боту «FaneraWeather»!
 Ви можете обрати город(/setcity) для постійного моніторингу погоди у вашому місті або просто дізнатись температуру у вашому місті (/weathernow).
                          """, reply_markup=kb.main)
@@ -45,13 +45,27 @@ async def register_name(message: Message, state: FSMContext):
 
 #---------test command-----------------
 @commands_router.message(Command("test"))
-async def cmd_start(message:Message):
-    await rq.set_plan_time(message.from_user.id, None)
+async def command_test(message:Message):
+    await message.answer("Error occurred!", show_alert=True)
+    # await rq.set_plan_time(message.from_user.id, None)
 
 #---------help command-----------------
 @commands_router.message(Command("help"))
 async def cmd_help(message: Message):
-    await answer_not_registered(message)
+    avaible_commands = [
+        {"command": "/start", "description": "Ласкаво просимо до погодного боту «FaneraWeather»!"},
+        {"command": "/setcity", "description": "Вказати місто для постійного моніторингу погоди"},
+        {"command": "/changecity", "description": "Змінити місто для моніторингу погоди"},
+        {"command": "/weathernow", "description": "Дізнатись поточну погоду у вказаному місті"},
+        {"command": "/test", "description": "Тестова команда для скидання часу планування"},
+        {"command": "/help", "description": "Показати список доступних команд"},
+        {"command": "/timermenu", "description": "Виводить меню таймера"},
+        {"command": "/enableplantimer", "description": "Вмикає таймер планування"}
+        
+    ]
+    help_text = "Доступні команди:\n\n" + "\n".join([f"{cmd['command']} - {cmd['description']}" for cmd in avaible_commands])
+    await message.answer(help_text)
+
     
 #----------change city command-----------------
 @commands_router.message(Command("changecity"))
