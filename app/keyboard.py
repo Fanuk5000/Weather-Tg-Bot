@@ -6,7 +6,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Поточна",),KeyboardButton(text="До кінця дня")],
                                      [KeyboardButton(text="Завтрашня"), KeyboardButton(text="3 дні")],
-                                     ],
+                                     [KeyboardButton(text="🎁Підримка проєкту💵",)]],
                            resize_keyboard=True,
                            input_field_placeholder="Оберіть на коли потрібна погода",)
 
