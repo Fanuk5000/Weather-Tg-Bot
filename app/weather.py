@@ -83,7 +83,7 @@ async def get_weather_to_end(city) -> str:
                         date_str = dt.strftime('%d-%m-%Y')
                         time_str = dt.strftime('%H:%M')
 
-                        # Filter for tomorrow's datej
+                        # Filter for tomorrow's date
                         if date_str == current_date:
                             temp = round(entry['temp'])
                             desc = entry['weather'][0]['description']
@@ -135,7 +135,7 @@ async def get_tomorrow_weather(city) -> str:
                         date_str = dt.strftime('%d-%m-%Y')
                         time_str = dt.strftime('%H:%M')
 
-                        # Filter for tomorrow's datej
+                        # Filter for tomorrow's date
                         if date_str == tomorrow_date:
                             temp = round(entry['temp'])
                             desc = entry['weather'][0]['description']

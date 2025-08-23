@@ -32,10 +32,6 @@ class Timers:
         self.router.callback_query.register(self.weather_format, F.data == "weather_format")
         self.router.callback_query.register(self.timer_info, F.data == "timer_info")
         self.router.callback_query.register(self.interval_plan_timer, F.data == "interval_plan_timer")
-
-    async def __check_users_timer(self, event: Message | CallbackQuery)-> bool: 
-        """Helper method that checks if user has a timer"""
-        return bool(self.scheduler.get_job(event.from_user.id))
     
     async def plan_timer_menu(self, message: Message):
         if await self.__check_user_city(message):
@@ -257,6 +253,10 @@ class Timers:
         
         if isinstance(event, CallbackQuery):
             await event.answer("")
+    
+    async def __check_users_timer(self, event: Message | CallbackQuery)-> bool: 
+        """Helper method that checks if user has a timer"""
+        return bool(self.scheduler.get_job(event.from_user.id))
     
     def set_bot(self, bot):
         self.bot = bot
