@@ -1,7 +1,6 @@
 from .common_imports import *
 
 from app.weather import get_current_weather, get_city_coordinates, get_tomorrow_weather, get_weather_for_3_days, get_weather_to_end
-from textwrap import dedent
 
 buttons_router = Router()
 
@@ -53,7 +52,7 @@ async def weather_for_3_days_button(message: Message):
     else:
         await answer_not_registered(message)
         
-@buttons_router.message(F.text == "🎁Підримка проєкту💵")
+@buttons_router.message(F.text == "🎁Підтримка проєкту💵")
 async def donate(message: Message):
     help_text = dedent("""
     🔗Посилання на банку(mono)
@@ -62,6 +61,6 @@ async def donate(message: Message):
     💳Номер картки банки
     ```4441 1111 2239 4046```
 
-    Дякую за підримку!
+    Дякую за підтримку!
     """)
     await message.answer(help_text, parse_mode="Markdown")

@@ -10,3 +10,5 @@ from aiogram.fsm.context import FSMContext
 import app.keyboard as kb
 #db import
 import app.database.requests as rq
+
+from textwrap import dedent

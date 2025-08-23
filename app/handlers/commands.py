@@ -35,7 +35,7 @@ async def register(message: Message, state: FSMContext):
         await message.answer("Напишіть назву міста")
 
 @commands_router.message(SetCity.city)
-async def register_name(message: Message, state: FSMContext):
+async def register_name_state(message: Message, state: FSMContext):
     await state.update_data(city = message.text)
     data = await state.get_data()
     await rq.set_user(message.from_user.id, data["city"], await get_city_coordinates(data["city"]))
@@ -60,13 +60,14 @@ async def cmd_help(message: Message):
         {"command": "/test", "description": "Тестова команда для скидання часу планування"},
         {"command": "/help", "description": "Показати список доступних команд"},
         {"command": "/timermenu", "description": "Виводить меню таймера"},
-        {"command": "/enableplantimer", "description": "Вмикає таймер планування"}
+        {"command": "/enableplantimer", "description": "Вмикає таймер планування"},
+        {"command": "/donate", "description": "Підтримати проєкт"},
         
     ]
     help_text = "Доступні команди:\n\n" + "\n".join([f"{cmd['command']} - {cmd['description']}" for cmd in avaible_commands])
     await message.answer(help_text)
 
-    
+
 #----------change city command-----------------
 @commands_router.message(Command("changecity"))
 async def change_city(message: Message, state: FSMContext):
@@ -77,7 +78,7 @@ async def change_city(message: Message, state: FSMContext):
         await answer_not_registered(message)
         
 @commands_router.message(ChangeCity.new_city)
-async def changing(message: Message, state: FSMContext):
+async def change_city_state(message: Message, state: FSMContext):
     await state.update_data(new_city = message.text)
     data = await state.get_data()
     await rq.change_city(message.from_user.id, data["new_city"], await get_city_coordinates(data["new_city"]))
@@ -88,12 +89,12 @@ async def changing(message: Message, state: FSMContext):
         
 #------weather now command----------------
 @commands_router.message(Command("weathernow"))
-async def get_curreant_weather(message: Message, state: FSMContext):
+async def getting_current_weather(message: Message, state: FSMContext):
     await state.set_state(WeatherNow.city)
     await message.answer("Напишіть місто, в якому хочете дізнатись погоду")
     
 @commands_router.message(WeatherNow.city)
-async def register(message: Message, state: FSMContext):
+async def getting_current_weather_state(message: Message, state: FSMContext):
     await state.update_data(city = message.text)
     
     state_data = await state.get_data()
@@ -101,4 +102,16 @@ async def register(message: Message, state: FSMContext):
     await state.clear()
     
     await message.answer(weather)
-    
+
+@commands_router.message(Command("donate"))
+async def donate(message: Message):
+    help_text = dedent("""
+    🔗Посилання на банку(mono)
+    https://send.monobank.ua/jar/2hyPuvj2ds
+
+    💳Номер картки банки
+    ```4441 1111 2239 4046```
+
+    Дякую за підтримку!
+    """)
+    await message.answer(help_text, parse_mode="Markdown")
