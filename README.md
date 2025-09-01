@@ -18,7 +18,7 @@ This a simple telegram bot with broadcasting functional written on python langua
 - Created config.env with `OPEN_WEATHER_TOKEN` and `TELEGRAM_BOT_TOKEN`
 - sqlite to check DB manually
 
-# Installation
+## Installation
 
 1. Clone the repository or download source code
 2. Navigate to the project directory
@@ -28,7 +28,7 @@ This a simple telegram bot with broadcasting functional written on python langua
     pip install -r requirements.txt
     ```
 
-# Contributing
+## Contributing
 
 1. Fork the repository!
 2. Clone your fork: git clone https://github.com/your-username/Weather-Tg-Bot.git
@@ -37,7 +37,7 @@ This a simple telegram bot with broadcasting functional written on python langua
 5. Push to the branch: git push origin my-new-feature
 6. Submit a pull request :D
 
-# Usage
+## Usage
 
 - To run the bot, use the following command in terminal:
     ```
@@ -45,5 +45,5 @@ This a simple telegram bot with broadcasting functional written on python langua
     ```
 - Disable bot with `ctrl + c` command or stop by closing terminal where it is running
 
-# Notes
+## Notes
 - To reset Data base uncomment for once line 29 in database/models.py
