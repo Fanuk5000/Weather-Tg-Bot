@@ -196,8 +196,8 @@ class Timers:
         weather = await weather_functions.get(weather_format, lambda _:
             "Яким чином ти це зробив? Такого формату не існує")(city)
 
-        repeat_or_not = "Одноразовий таймер" if reapeat_in_days == 0 else f"Таймер повториться через {reapeat_in_days} {"день" if reapeat_in_days == 1 else "днів"}"
-        
+        repeat_or_not = "Одноразовий таймер" if reapeat_in_days == 0 else f"Таймер повториться через {reapeat_in_days} {'день' if reapeat_in_days == 1 else 'днів'}"
+
         await self.bot.send_message(chat_id, text=f"Погода в місті {city}:\n\n{weather}\n\n{repeat_or_not}.\n")
         
         if reapeat_in_days == 0:
