@@ -39,7 +39,7 @@ async def get_city_coordinates(city: str) -> str:
             ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    print(data)
+                     
                     if data:
                         lat = data[0]['lat']
                         lon = data[0]['lon']
@@ -65,7 +65,7 @@ async def get_current_weather(city: str) -> str:
                 
                 if response.status == 200: #success
                     data = await response.json()
-                    print(data)
+                     
                     desc = data['weather'][0]['description']
                     weather_icon = WEATHER_ICONS.get(desc, desc)
 
@@ -94,7 +94,7 @@ async def get_weather_to_end(city) -> str:
             ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    print(data)
+                     
                     hourly = data['hourly']
 
                     # Get tomorrow's date
@@ -148,7 +148,7 @@ async def get_tomorrow_weather(city) -> str:
                 if response.status == 200:
                     data = await response.json()
                     hourly = data['hourly']
-                    print(data)
+                     
                     # Get tomorrow's date
                     global tomorrow_date
                     tomorrow_date = (datetime.now() + timedelta(days=1)).strftime('%d-%m-%Y')
@@ -201,7 +201,7 @@ async def get_weather_for_3_days(city: str) -> str:
                 if response.status == 200: #success
                     days_dict = {}
                     data = await response.json()
-                    print(data)
+                     
                     for days in data["daily"][1:4]:
                         dt = datetime.fromtimestamp(days['dt'])
                         date_str = dt.strftime('%d-%m-%Y')
