@@ -29,7 +29,7 @@ async def answer_not_registered(message:Message):
 @commands_router.message(Command("setcity"))
 async def register(message: Message, state: FSMContext):
     if await rq.check_user(message.from_user.id):
-        await message.answer("Ви вже вказали город\nЯкщо хочете його змінити \"/change_city\"")
+        await message.answer("Ви вже вказали город\nЯкщо хочете його змінити \"/changecity\"")
     else:
         await state.set_state(SetCity.city)
         await message.answer("Напишіть назву міста")
